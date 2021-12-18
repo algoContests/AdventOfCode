@@ -6,8 +6,7 @@ def is_valid_first(i):
     policy, password = map(str, i.split(':'))
     letter_range, letter = map(str, policy.split())
     min, max = map(int, letter_range.split('-'))
-    count_letter = len([l for l in password if l == letter])
-    return int(min) <= count_letter <= int(max)
+    return int(min) <= password.count(letter) <= int(max)
 
 def is_valid_second(i):
     policy, password = map(str, i.split(':'))

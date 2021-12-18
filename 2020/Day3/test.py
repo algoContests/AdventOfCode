@@ -1,0 +1,1 @@
+import itertoolsliste = ['a', 'b', 'c', 'd']it = iter(liste)while it:    try:        c = next(it)        print(c)        if c == 'c':            liste.remove(c)    except StopIteration:        print(f'new liste: {liste}')        break
