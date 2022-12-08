@@ -11,9 +11,6 @@ class Node:
         self.size = size
         self.children = []
 
-    # def __repr__(self):
-    #     return f'{self.val} {self.size}' if not self.is_dir or not self.parent else f'{self.val}/ {self.size}'
-
     def __repr__(self, level=0):
         ret = "\t" * level + repr(self.value) + " - " + repr(self.size) + "\n"
         for child in self.children:
