@@ -1,0 +1,44 @@
+with open('input.txt') as f:
+    lines = f.read().split("\n\n")
+    maps = lines[1::]
+    dest = list(map(int, lines[0].split(":")[1].strip().split()))
+    seeds = []
+
+    for i in range(0, len(dest), 2):
+        seeds.append([dest[i], dest[i] + dest[i + 1]])
+
+    min_l = 0
+
+for m in maps:
+    ranges = []
+
+    for line in m.split("\n")[1::]:
+        ranges.append(list(map(int, line.split())))
+
+    dest = []
+
+    for x, y, z in ranges:
+        f = max(fst, y)
+        l = min(lst, y + z)
+        if f < l:
+            dest.append([f - y + x, l - y + x])
+
+    while seeds:
+        fst, lst = seeds.pop()
+        for dest, source, length in ranges:
+            f = max(fst, source)
+            l = min(lst, source + length)
+            if f < l:
+                dest.append([f - length + dest, l - source + dest])
+                if f > fst:
+                    seeds.append([fst, f])
+                if lst > l:
+                    seeds.append([l, lst])
+                break
+        else:
+            dest.append([fst, lst])
+
+    min_l = min(dest)[0]
+    temp = dest
+
+print(min_l)
