@@ -1,9 +1,6 @@
-#### https://adventofcode.com/2020
-#### https://adventofcode.com/2021
-#### https://adventofcode.com/2022
-#### https://adventofcode.com/2023
+https://adventofcode.com
 
-Solutions:
+Autres solutions:
 - https://github.com/leojean890/competitive-programming
 - https://github.com/jmerle/advent-of-code-2023
 - https://github.com/michaeljgallagher/Advent-of-Code
