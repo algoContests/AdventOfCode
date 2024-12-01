@@ -11,7 +11,7 @@ def process_file(filename: str) -> tuple:
         return tuple(map(list, zip(*numbers)))  # Unzip the pairs into two lists
 
 
-def part_1(liste_1: List[int], liste_2: List[int]) -> int:
+def part_1_optimized(liste_1: List[int], liste_2: List[int]) -> int:
     """Calculate total distance using heap for efficient minimum finding."""
     # Convert lists to heaps for O(1) min operations
     l1, l2 = [*liste_1], [*liste_2]
@@ -22,6 +22,10 @@ def part_1(liste_1: List[int], liste_2: List[int]) -> int:
     while l1:
         distance += abs(heappop(l1) - heappop(l2))
     return distance
+
+def part_1(liste_1: List[int], liste_2: List[int]) -> int:
+    """Calculate total distance using sorted lists."""
+    return sum(abs(a - b) for a, b in zip(sorted(liste_1), sorted(liste_2)))
 
 
 def part_2(l1: List[int], l2: List[int]) -> int:

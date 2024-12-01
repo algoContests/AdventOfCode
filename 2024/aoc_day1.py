@@ -10,15 +10,8 @@ def process_file(filename: str) -> list[Any]:
 
 
 def part_1(liste_1: List[int], liste_2: List[int]) -> int:
-    distance: int = 0
-    l1, l2 = [*liste_1], [*liste_2]
-    while l1:
-        a = min(l1)
-        b = min(l2)
-        l1.remove(a)
-        l2.remove(b)
-        distance += abs(a - b)
-    return distance
+    """Calculate total distance using sorted lists."""
+    return sum(abs(a - b) for a, b in zip(sorted(liste_1), sorted(liste_2)))
 
 
 def part_2(l1: List[int], l2: List[int]) -> int:
