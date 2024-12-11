@@ -1,5 +1,7 @@
+import math
 from collections import defaultdict
 from itertools import combinations
+
 
 def process_file(filename: str) -> tuple:
     """
@@ -20,75 +22,52 @@ def process_file(filename: str) -> tuple:
         return antennas, width, height
 
 
-
-
-def part_1(antennas, width, height) -> int:
-    """Calculates all unique antinode positions in the map."""
+def part_1(antennas, width, height):
     antinodes = set()
-
-    # Use defaultdict to eliminate the need for setdefault
-    by_frequency = defaultdict(list)
-    for x, y, freq in antennas:
-        by_frequency[freq].append((x, y))
-
-    # Process each frequency group using combinations
-    for positions in by_frequency.values():
-        # Use combinations instead of nested loops
-        for (x1, y1), (x2, y2) in combinations(positions, 2):
-            # Midpoint check
-            if not ((x1 + x2) & 1 or (y1 + y2) & 1):  # Using bitwise AND for modulo 2
-                mx, my = (x1 + x2) >> 1, (y1 + y2) >> 1  # Using bit shift for division by 2
-                antinodes.add((mx, my))
-
-            # Calculate differences once
-            dx, dy = x2 - x1, y2 - y1
-
-            # Antinodes at double distance - unrolled loop
-            ax1, ay1 = x2 + dx, y2 + dy
-            if 0 <= ax1 < width and 0 <= ay1 < height:
-                antinodes.add((ax1, ay1))
-
-            ax2, ay2 = x2 - dx, y2 - dy
-            if 0 <= ax2 < width and 0 <= ay2 < height:
-                antinodes.add((ax2, ay2))
-
-    return len(antinodes)
-
-
-def part_1_old(antennas, width, height) -> int:
-    """Calculates all unique antinode positions in the map."""
-    antinodes = set()
-
-    # Group antennas by frequency
-    by_frequency = {}
-    for x, y, freq in antennas:
-        by_frequency.setdefault(freq, []).append((x, y))
-
-    # Process each frequency group
-    for freq, positions in by_frequency.items():
-        n = len(positions)
-        for i in range(n):
-            for j in range(i + 1, n):
-                x1, y1 = positions[i]
-                x2, y2 = positions[j]
-
-                # Midpoint and double distance checks
+    for i, (x1, y1, f1) in enumerate(antennas):
+        for x2, y2, f2 in antennas[i + 1:]:
+            if f1 == f2:
                 dx, dy = x2 - x1, y2 - y1
-                mx, my = (x1 + x2) // 2, (y1 + y2) // 2
-
-                if (x1 + x2) % 2 == 0 and (y1 + y2) % 2 == 0:  # Midpoint is integer
-                    antinodes.add((mx, my))
-
-                # Antinodes at double distance
-                for k in (-1, 1):
-                    ax, ay = x2 + k * dx, y2 + k * dy
-                    if 0 <= ax < width and 0 <= ay < height:
-                        antinodes.add((ax, ay))
-
+                # Midpoint
+                mx, my = x1 + dx / 2, y1 + dy / 2
+                if mx.is_integer() and my.is_integer():
+                    if 0 <= (mx := int(mx)) < width and 0 <= (my := int(my)) < height:
+                        antinodes.add((mx, my))
+                # Double distance points
+                for x, y in [(x2 + dx, y2 + dy), (x1 - dx, y1 - dy)]:
+                    if 0 <= x < width and 0 <= y < height:
+                        antinodes.add((int(x), int(y)))
     return len(antinodes)
 
-def part_2(antennas, width, height) -> int:
-    pass
+
+def part_2(antennas, width, height):
+    antinodes = set()
+    freq_groups = {}
+    for x, y, f in antennas:
+        freq_groups.setdefault(f, []).append((x, y))
+
+    for points in freq_groups.values():
+        if len(points) < 2:
+            continue
+
+        for i, (x1, y1) in enumerate(points):
+            if 0 <= x1 < width and 0 <= y1 < height:
+                antinodes.add((int(x1), int(y1)))
+
+            for x2, y2 in points[i + 1:]:
+                dx, dy = x2 - x1, y2 - y1
+                if dx or dy:
+                    gcd = abs(math.gcd(dx, dy)) if dy else abs(dx)
+                    dx, dy = dx // gcd, dy // gcd
+
+                    for direction in (1, -1):
+                        x, y = x1, y1
+                        while 0 <= x < width and 0 <= y < height:
+                            antinodes.add((int(x), int(y)))
+                            x += dx * direction
+                            y += dy * direction
+
+    return len(antinodes)
 
 
 def main() -> None:
@@ -96,7 +75,6 @@ def main() -> None:
     Main function to run the program and display results for Part 1 and Part 2.
     """
     antennas, width, height = process_file('input.txt')
-
 
     print(f"result aoc day 8 - p1: {part_1(antennas, width, height)}")
     print(f"result aoc day 8 - p2: {part_2(antennas, width, height)}")
