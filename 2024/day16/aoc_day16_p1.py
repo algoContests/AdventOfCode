@@ -3,14 +3,20 @@ from time import process_time
 
 
 def process_file(filename: str) -> tuple:
-    """Parse the maze and find start and end positions"""
+    """
+     Parse the maze and find start and end positions
+    """
     with open(filename) as f:
-        grid = f.read().splitlines()
-        coords = [(x, y, c) for y, line in enumerate(grid) for x, c in enumerate(line)]
-        start = next((x, y) for x, y, c in coords if c == 'S')
-        end = next((x, y) for x, y, c in coords if c == 'E')
+        grid = []
+        start = end = None
+        for y, line in enumerate(f.read().splitlines()):
+            grid.append(line)
+            for x, char in enumerate(line):
+                if char == 'S':
+                    start = (x, y)
+                elif char == 'E':
+                    end = (x, y)
         return grid, start, end
-
 
 
 def is_valid(x, y, grid):
