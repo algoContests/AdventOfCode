@@ -76,7 +76,7 @@ def test_day_15():
 
 def main():
     """ Run the exercise """
-    submarine = Grid("input15")
+    submarine = Grid("input.txt")
     submarine.create_graph()
 
     print(submarine.get_path_sum())
