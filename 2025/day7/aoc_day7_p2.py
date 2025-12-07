@@ -57,6 +57,25 @@ def count_timelines(grid: List[List[str]]) -> int:
 
 	return result
 
+def count_timelines_short(grid: List[List[str]]) -> int:
+	width, height = len(grid[0]), len(grid)
+	start_x = grid[0].index('S')
+	counts = [0] * width
+	counts[start_x] = 1
+	result = 0
+	# counts: liste length=width, counts[start_x]=1
+	for y in range(height):
+		new_counts = [0]*width
+		for x, c in enumerate(counts):
+			if c == 0: continue
+			if grid[y][x] == '^':
+				if 0 <= x-1 < width: new_counts[x-1] += c
+				if 0 <= x+1 < width: new_counts[x+1] += c
+			else:
+				if y+1 < height: new_counts[x] += c
+				else: result += c   # atteint la sortie
+		counts = new_counts
+	return result
 
 def part_1(grid: List[List[str]]) -> int:
 	# même comportement que part_2 pour l'instant
@@ -64,7 +83,7 @@ def part_1(grid: List[List[str]]) -> int:
 
 
 def part_2(grid: List[List[str]]) -> int:
-	return count_timelines(grid=grid)
+	return count_timelines_short(grid=grid)
 
 
 def main() -> None:
