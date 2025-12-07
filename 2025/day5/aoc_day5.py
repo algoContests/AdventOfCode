@@ -1,5 +1,5 @@
 from typing import List, Optional
-from bisect import bisect_right
+from bisect import bisect_right, bisect_left
 
 
 def process_file(filename: str) -> tuple[list[tuple[int, int]], set]:
@@ -33,6 +33,11 @@ def process_file(filename: str) -> tuple[list[tuple[int, int]], set]:
 	return [(s, e) for s, e in merged], avail_set
 
 
+def binary_search(a, x):
+	i = bisect_left(a, x)
+	return i < len(a) and a[i] == x
+
+
 def bisect_right_custom(a: List[int], x: int) -> int:
 	"""Retourne l'indice d'insertion à droite de x dans la liste triée a."""
 	lo = 0
@@ -54,6 +59,8 @@ def part_1(fresh_intervals: list[tuple[int, int]], avail_ing: set[int]) -> int:
 	for x in avail_ing:
 		# trouver l'intervalle dont le début est le plus grand <= x.
 		# Cela permet de localiser rapidement l'intervalle potentiel contenant x
+		# N.B.: bisect_left(l, x) : première position où insérer x (permet de tester l'existen
+		# 		bisect_right(l, x) : dernière position où insérer x
 		# i = bisect_right(starts, x) - 1
 		i = bisect_right_custom(starts, x) - 1
 		if i >= 0 and x <= ends[i]:
@@ -67,8 +74,8 @@ def part_2(fresh_intervals: list[tuple[int, int]], avail_ing: set[int]) -> int:
 
 def main() -> None:
 	fresh_intervals, avail_ing = process_file('input.txt')
-	print(f"result aoc day 4 - p1: {part_1(fresh_intervals, avail_ing)}")
-	print(f"result aoc day 4 - p2: {part_2(fresh_intervals, avail_ing)}")
+	print(f"result aoc day 5 - p1: {part_1(fresh_intervals, avail_ing)}")
+	print(f"result aoc day 5 - p2: {part_2(fresh_intervals, avail_ing)}")
 
 
 if __name__ == "__main__":
