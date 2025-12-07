@@ -36,8 +36,8 @@ def part_2(banks: list[Any]) -> int:
 
 def main() -> None:
 	l = process_file('input.txt')
-	print(f"result aoc day 2 - p1: {part_1(banks=l)}")
-	print(f"result aoc day 2 - p2: {part_2(banks=l)}")
+	print(f"result aoc day 3 - p1: {part_1(banks=l)}")
+	print(f"result aoc day 3 - p2: {part_2(banks=l)}")
 
 
 if __name__ == "__main__":
