@@ -45,168 +45,88 @@ def part_1(reds: List[List[str]]) -> int:
 
 
 def part_2(coords: List[Tuple[int, int]]) -> int:
-    """Compressed-coordinate implementation of part2: avoids building a large explicit grid.
-
-    coords: list of (x,y) positions of red tiles.
-    Returns largest rectangle area with red corners and all interior tiles red or green.
-    """
     if not coords:
         return 0
 
-    # unique sorted coordinate anchors
-    xs = sorted(set(x for x, y in coords))
-    ys = sorted(set(y for x, y in coords))
-    min_x = min(xs); max_x = max(xs)
-    min_y = min(ys); max_y = max(ys)
-
-    # build Xs and Ys arrays including sentinel boundaries and x+1/y+1 to represent tiles
-    Xs = sorted(set([min_x - 1, max_x + 1] + xs + [x + 1 for x in xs]))
-    Ys = sorted(set([min_y - 1, max_y + 1] + ys + [y + 1 for y in ys]))
-
-    widths = [Xs[i + 1] - Xs[i] for i in range(len(Xs) - 1)]
-    heights = [Ys[i + 1] - Ys[i] for i in range(len(Ys) - 1)]
-    w = len(widths); h = len(heights)
-
-    x_to_idx = {X: i for i, X in enumerate(Xs)}
-    y_to_idx = {Y: j for j, Y in enumerate(Ys)}
-
-    def cx(x):
-        return x_to_idx[x]
-    def cy(y):
-        return y_to_idx[y]
-
-    reds = coords
-
-    # neighbors along rows/cols
-    neighbors = {p: set() for p in reds}
-    by_row = {}
-    by_col = {}
-    for x, y in reds:
-        by_row.setdefault(y, []).append(x)
-        by_col.setdefault(x, []).append(y)
-    for y, xs_row in by_row.items():
-        xs_sorted = sorted(xs_row)
-        for i, x in enumerate(xs_sorted):
-            p = (x, y)
-            if i > 0:
-                neighbors[p].add((xs_sorted[i - 1], y))
-            if i + 1 < len(xs_sorted):
-                neighbors[p].add((xs_sorted[i + 1], y))
-    for x, ys_col in by_col.items():
-        ys_sorted = sorted(ys_col)
-        for i, y in enumerate(ys_sorted):
-            p = (x, y)
-            if i > 0:
-                neighbors[p].add((x, ys_sorted[i - 1]))
-            if i + 1 < len(ys_sorted):
-                neighbors[p].add((x, ys_sorted[i + 1]))
-
-    # Build edges from ordered list: each red connects to the next in the list (wrap around)
-    edges = set()
-    # coords list wraps: connect reds[i] -> reds[(i+1)%n]
-    n = len(reds)
-    for i in range(n):
-        a = reds[i]
-        b = reds[(i + 1) % n]
-        # ensure horizontal or vertical as guaranteed by problem
-        if not (a[0] == b[0] or a[1] == b[1]):
-            # fallback: if not aligned, skip (robustness)
-            continue
-        edges.add(tuple(sorted((a, b))))
-
-    # allowed compressed cells
-    allowed = [[False] * w for _ in range(h)]
-
-    # mark red tile cells
-    for x, y in reds:
-        i = cx(x); j = cy(y)
-        if 0 <= i < w and 0 <= j < h:
-            allowed[j][i] = True
-
-    # mark green edges in compressed indices
-    for a, b in edges:
-        (x1, y1), (x2, y2) = a, b
-        if x1 == x2:
-            i = cx(x1)
-            j1 = cy(min(y1, y2))
-            j2 = cy(max(y1, y2))
-            for j in range(j1, j2 + 1):
-                allowed[j][i] = True
-        elif y1 == y2:
-            j = cy(y1)
-            i1 = cx(min(x1, x2))
-            i2 = cx(max(x1, x2))
-            for i in range(i1, i2 + 1):
-                allowed[j][i] = True
-
-    # flood-fill exterior on compressed grid
+    import numpy as np
     from collections import deque
-    vis = [[False] * w for _ in range(h)]
+    import itertools
+
+    xs = sorted({x for x, _ in coords})
+    ys = sorted({y for _, y in coords})
+    Xs = sorted({min(xs) - 1, max(xs) + 1} | set(xs) | {x + 1 for x in xs})
+    Ys = sorted({min(ys) - 1, max(ys) + 1} | set(ys) | {y + 1 for y in ys})
+
+    widths = np.array([Xs[i + 1] - Xs[i] for i in range(len(Xs) - 1)], dtype=np.int64)
+    heights = np.array([Ys[j + 1] - Ys[j] for j in range(len(Ys) - 1)], dtype=np.int64)
+    x_idx = {X: i for i, X in enumerate(Xs)}
+    y_idx = {Y: j for j, Y in enumerate(Ys)}
+    w, h = len(widths), len(heights)
+
+    # allowed mask
+    allowed = np.zeros((h, w), dtype=bool)
+    for x, y in coords:
+        allowed[y_idx[y], x_idx[x]] = True
+
+    # draw cycle edges (green segments)
+    n = len(coords)
+    for i in range(n):
+        (x1, y1), (x2, y2) = coords[i], coords[(i + 1) % n]
+        if x1 == x2:
+            ci = x_idx[x1]; j1, j2 = y_idx[min(y1, y2)], y_idx[max(y1, y2)]
+            allowed[j1:j2+1, ci] = True
+        elif y1 == y2:
+            rj = y_idx[y1]; i1, i2 = x_idx[min(x1, x2)], x_idx[max(x1, x2)]
+            allowed[rj, i1:i2+1] = True
+
+    # flood-fill exterior to identify interior cells
+    vis = np.zeros((h, w), dtype=bool)
     q = deque()
+    # border enqueue
     for i in range(w):
-        if not allowed[0][i]:
-            vis[0][i] = True; q.append((i, 0))
-        if not allowed[h - 1][i]:
-            vis[h - 1][i] = True; q.append((i, h - 1))
+        if not allowed[0, i]: vis[0, i] = True; q.append((i, 0))
+        if not allowed[h - 1, i]: vis[h - 1, i] = True; q.append((i, h - 1))
     for j in range(h):
-        if not allowed[j][0]:
-            vis[j][0] = True; q.append((0, j))
-        if not allowed[j][w - 1]:
-            vis[j][w - 1] = True; q.append((w - 1, j))
+        if not allowed[j, 0]: vis[j, 0] = True; q.append((0, j))
+        if not allowed[j, w - 1]: vis[j, w - 1] = True; q.append((w - 1, j))
     while q:
         i, j = q.popleft()
         for di, dj in ((1, 0), (-1, 0), (0, 1), (0, -1)):
             ni, nj = i + di, j + dj
-            if 0 <= ni < w and 0 <= nj < h and not vis[nj][ni] and not allowed[nj][ni]:
-                vis[nj][ni] = True
+            if 0 <= ni < w and 0 <= nj < h and not vis[nj, ni] and not allowed[nj, ni]:
+                vis[nj, ni] = True
                 q.append((ni, nj))
+    # interior cells become allowed
+    allowed[~vis & ~allowed] = True
 
-    # interior cells are those not vis and not allowed
-    for j in range(h):
-        for i in range(w):
-            if not allowed[j][i] and not vis[j][i]:
-                allowed[j][i] = True
+    # prefix sum of allowed * cell_area using numpy
+    cell_area = (heights.reshape(-1, 1) * widths.reshape(1, -1)).astype(np.int64)
+    allowed_area = (allowed * cell_area)
+    cs = allowed_area.cumsum(axis=0).cumsum(axis=1)
+    ps = np.zeros((h + 1, w + 1), dtype=np.int64)
+    ps[1:, 1:] = cs
 
-    # prefix sum of allowed areas (cell areas vary)
-    ps = [[0] * (w + 1) for _ in range(h + 1)]
-    for j in range(h):
-        for i in range(w):
-            cell_area = widths[i] * heights[j]
-            ps[j + 1][i + 1] = ps[j][i + 1] + ps[j + 1][i] - ps[j][i] + (cell_area if allowed[j][i] else 0)
+    def rect_sum(i1, j1, i2, j2):
+        return int(ps[j2 + 1, i2 + 1] - ps[j1, i2 + 1] - ps[j2 + 1, i1] + ps[j1, i1])
 
-    def rect_area_sum(i1, j1, i2, j2):
-        return ps[j2 + 1][i2 + 1] - ps[j1][i2 + 1] - ps[j2 + 1][i1] + ps[j1][i1]
-
-    # search over all unordered pairs of red tiles as opposite corners
+    # test pairs of red tiles
     best = 0
-    n = len(reds)
-    # Precompute global bounds for pruning
-    max_x = max(x for x, y in reds)
-    max_y = max(y for x, y in reds)
-    min_x = min(x for x, y in reds)
-    min_y = min(y for x, y in reds)
-    for i in range(n):
-        x_a, y_a = reds[i]
-        for j in range(i + 1, n):
-            x_b, y_b = reds[j]
-            # form rectangle coordinates (inclusive)
-            x1, x2 = (x_a, x_b) if x_a <= x_b else (x_b, x_a)
-            y1, y2 = (y_a, y_b) if y_a <= y_b else (y_b, y_a)
-            if x1 == x2 or y1 == y2:
-                # degenerate (same row or same col) -> area zero in this context
-                continue
-            # quick global pruning: if max possible area with these mins cannot beat best
-            possible_upper = (max_x - x1 + 1) * (max_y - y1 + 1)
-            if possible_upper <= best:
-                continue
-            total_area = (x2 - x1 + 1) * (y2 - y1 + 1)
-            if total_area <= best:
-                continue
-            i1 = cx(x1); i2 = cx(x2)
-            j1 = cy(y1); j2 = cy(y2)
-            allowed_area = rect_area_sum(i1, j1, i2, j2)
-            if allowed_area == total_area:
-                best = total_area
+    max_x = max(x for x, _ in coords)
+    max_y = max(y for _, y in coords)
+    for (x1, y1), (x2, y2) in itertools.combinations(coords, 2):
+        lx, rx = (x1, x2) if x1 <= x2 else (x2, x1)
+        ly, ry = (y1, y2) if y1 <= y2 else (y2, y1)
+        if lx == rx or ly == ry:
+            continue
+        area = (rx - lx + 1) * (ry - ly + 1)
+        if area <= best:
+            continue
+        if (max_x - lx + 1) * (max_y - ly + 1) <= best:
+            continue
+        i1, i2 = x_idx[lx], x_idx[rx]
+        j1, j2 = y_idx[ly], y_idx[ry]
+        if rect_sum(i1, j1, i2, j2) == area:
+            best = area
     return best
 
 
