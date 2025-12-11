@@ -18,21 +18,6 @@ def process_file(filename: str) -> dict:
 		return graph
 
 
-def part_1(graph: dict) -> int:
-	queue = deque([( 'you', [] )])
-	paths = []
-	while queue:
-		node, path = queue.popleft()
-		if node == 'out':
-			paths.append(path)
-			continue
-		for new_node in graph.get(node, []):
-			new_path = path + [new_node]
-			queue.append((new_node, new_path))
-	return len(paths)
-
-
-
 def part_2(graph: dict) -> int:
 	"""
 	Part_2 minimal (aucun cycle attendu) :
@@ -105,6 +90,7 @@ def part_2(graph: dict) -> int:
 	res = dp_from_s[pos['fft']] * paths_f_to_d * dp_to_t[pos['dac']]
 	return res
 
+
 # --- Visualisation helpers ---
 
 def _write_dot(graph: dict, path: str, directed: bool = True) -> None:
@@ -168,6 +154,7 @@ def draw_graph(graph: dict, dotfile: str = 'graph.dot', pngfile: str = 'graph.pn
 					if v not in seen:
 						q.append(v)
 			return seen
+
 		# backward reachable to a target (nodes that can reach target)
 		def backward(target):
 			q = deque([target])
